@@ -4,8 +4,6 @@ Peer Assessment 1 "Reproducible Research"
 ```{r preamble, echo = TRUE}
 require(ggplot2)
 require(plyr)
-
-
 ```
 
 
@@ -24,7 +22,7 @@ dat$date.day <- format(dat$date, format = "%Y-%j")
 
 ```
 
-```{r histogram, echo=TRUE, fig.width=10, fig.height=7}
+```{r histogram, echo=TRUE, fig.width=10, fig.height=7, message = FALSE}
 
 steps.day <- ddply(dat, .(date.day), function(df) {
   
@@ -38,8 +36,19 @@ steps.day <- ddply(dat, .(date.day), function(df) {
   })
 
 
-hist(steps.day$steps, col = "grey", las = 1, xlab = "Number of steps per day", main = "", breaks = 20)
+p <- ggplot(steps.day, aes(x=steps)) +
+  geom_histogram() +
+  ylab("Frequency") +
+  xlab("Number of steps per day") +
+  theme(axis.title.y = element_text(vjust=1, size=25, angle=90)) +
+  theme(axis.title.x = element_text(size=25, angle=0)) +
+  theme(axis.text.x = element_text(size=17, angle=0, colour = "black")) +
+  theme(axis.text.y = element_text(size=17, colour = "black")) +
+  theme(legend.text = element_text(size = 15)) +
+  theme(legend.title = element_text(size = 15, face = "bold")) +
+  theme(legend.background = element_blank())
 
+p
 
 ```
 
@@ -53,7 +62,7 @@ cat("The mean number of steps taken each day was ", round(mean.steps, 2), " whil
 
 ```
 
-```{r time series plot, echo=TRUE, fig.width=10, fig.height=7}
+```{r time series plot, echo=TRUE, fig.width=11, fig.height=7}
 
 steps.interval <- ddply(dat, .(interval), function(df) {
   
@@ -84,11 +93,14 @@ p <- ggplot(steps.interval, aes(x = interval, y = steps)) +
 
 p
 
-cat("The interval with the most taken steps on average was ",steps.interval$interval[max.index], ".", sep = "")
+cat("The interval with the most taken steps on average was ", steps.interval$interval[max.index], ".", sep = "")
 
 ```
 
-```{r imputing missing values, echo=TRUE}
+The mean of the corresponding 5-minute-interval is used to impute the missing values.
+
+```{r imputing missing values, echo=TRUE, fig.width=11, fig.height=7, message = FALSE}
+
 
 total.missing <- sum(is.na(dat$steps))
 cat("The total number of missing values was ", total.missing, ".", sep = "")
@@ -115,7 +127,19 @@ steps.day.imp <- ddply(dat.imp , .(date.day), function(df) {
   })
 
 
-hist(steps.day.imp$steps, col = "grey", las = 1, xlab = "Number of steps per day (imputed)", main = "", breaks = 20)
+p <- ggplot(steps.day.imp, aes(x=steps)) +
+  geom_histogram() +
+  ylab("Frequency") +
+  xlab("Number of steps per day (imputed)") +
+  theme(axis.title.y = element_text(vjust=1, size=25, angle=90)) +
+  theme(axis.title.x = element_text(size=25, angle=0)) +
+  theme(axis.text.x = element_text(size=17, angle=0, colour = "black")) +
+  theme(axis.text.y = element_text(size=17, colour = "black")) +
+  theme(legend.text = element_text(size = 15)) +
+  theme(legend.title = element_text(size = 15, face = "bold")) +
+  theme(legend.background = element_blank())
+
+p
 
 median.steps.imp <- median(steps.day.imp$steps, na.rm = TRUE)
 mean.steps.imp <- mean(steps.day.imp$steps, na.rm = TRUE)
@@ -126,7 +150,7 @@ cat("The mean number of steps taken each day with imputed data was ", round(medi
 
 ```
 
-```{r investigate weekends, echo=TRUE, fig.width=8, fig.height=7}
+```{r investigate weekends, echo=TRUE, fig.width=11, fig.height=10}
 
 dat.imp <- transform(dat.imp, weekend = as.POSIXlt(date, format='%m/%d/%Y')$wday %in% c(0, 6))
 
