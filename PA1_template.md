@@ -1,37 +1,39 @@
-# Peer Assessment 1 "Reproducible Research"
+Peer Assessment 1 "Reproducible Research"
+========================================================
 
-```{r load packages, echo = TRUE, message=FALSE}
-pgks <- c("ggplot2", "plyr")
-sapply(pgks, require, character.only = TRUE, quietly = TRUE)
+
+```r
+require(ggplot2)
 ```
 
-### Read the data file
+```
+## Loading required package: ggplot2
+```
 
-Read the CSV file as a data frame with no conversions (i.e. `as.is = TRUE`).
+```r
+require(plyr)
+```
 
-```{r read data, echo = TRUE}
+```
+## Loading required package: plyr
+```
 
+
+
+```r
 setwd("F:/miscellanea/R Resources and Models/Coursera/Reproducible Research")
 
-dat <- read.csv("activity.csv", as.is = TRUE)
-
+dat <- read.csv("activity.csv")
 ```
 
-Convert the dates (`date`) to the appropriate date class.
 
-```{r data processing steps, echo = TRUE}
-
+```r
 dat$date <- strptime(dat$date, format = "%Y-%m-%d")
 dat$date.day <- format(dat$date, format = "%Y-%j")
-
 ```
 
-### Histogram of daily steps
 
-The missing values are ignored when aggregating the steps per day (option `na.rm = TRUE`).
-
-```{r histogram, echo=TRUE, fig.width=10, fig.height=7, message = FALSE}
-
+```r
 steps.day <- ddply(dat, .(date.day), function(df) {
   
   ds <- data.frame(
@@ -45,7 +47,7 @@ steps.day <- ddply(dat, .(date.day), function(df) {
 
 
 p <- ggplot(steps.day, aes(x=steps)) +
-  geom_histogram(binwidth=1000) +
+  geom_histogram() +
   ylab("Frequency") +
   xlab("Number of steps per day") +
   theme(axis.title.y = element_text(vjust=1, size=25, angle=90)) +
@@ -57,24 +59,25 @@ p <- ggplot(steps.day, aes(x=steps)) +
   theme(legend.background = element_blank())
 
 p
-
 ```
 
-### Summary statistics of daily steps
+![plot of chunk histogram](figure/histogram.png) 
 
-```{r summary statistics, echo=TRUE}
 
+
+```r
 median.steps <- median(steps.day$steps, na.rm = TRUE)
 mean.steps <- mean(steps.day$steps, na.rm = TRUE)
 
-message("The mean number of steps taken each day was ", round(mean.steps, 2), " while the median was ", round(median.steps, 2), ".", sep = "")
-
+cat("The mean number of steps taken each day was ", round(mean.steps, 2), " while the median was ", round(median.steps, 2), ".", sep = "")
 ```
 
-### Time series plot
+```
+## The mean number of steps taken each day was 9354 while the median was 10395.
+```
 
-```{r time series plot, echo=TRUE, fig.width=11, fig.height=7}
 
+```r
 steps.interval <- ddply(dat, .(interval), function(df) {
   
   ds <- data.frame(
@@ -103,25 +106,36 @@ p <- ggplot(steps.interval, aes(x = interval, y = steps)) +
   theme(legend.background = element_blank())
 
 p
-
-cat("The interval with the most taken steps on average was ", steps.interval$interval[max.index], ".", sep = "")
-
 ```
 
-### Imputation of missing values
+![plot of chunk time series plot](figure/time series plot.png) 
+
+```r
+cat("The interval with the most taken steps on average was ", steps.interval$interval[max.index], ".", sep = "")
+```
+
+```
+## The interval with the most taken steps on average was 835.
+```
 
 The mean of the corresponding 5-minute-interval is used to impute the missing values.
 
-```{r imputing missing values, echo=TRUE}
 
+```r
 total.missing <- sum(is.na(dat$steps))
-message("The total number of missing values was ", total.missing, ".", sep = "")
+cat("The total number of missing values was ", total.missing, ".", sep = "")
+```
 
-# Imputing the missing values
+```
+## The total number of missing values was 2304.
+```
 
-dat.miss <- dat[is.na(dat$steps), names(dat)[2:4]] # Just select the values that are missing.
+```r
+# Imputing
 
-dat.miss <- join(x = dat.miss, y = steps.interval, by = "interval") # merge the missing values with the median one
+dat.miss <- dat[is.na(dat$steps), names(dat)[2:4]]
+
+dat.miss <- join(x = dat.miss, y = steps.interval, by = "interval")
 
 dat.new <- dat[!is.na(dat$steps), ]
 
@@ -137,11 +151,8 @@ steps.day.imp <- ddply(dat.imp , .(date.day), function(df) {
   return(ds)
   
   })
-```
 
-### Histogram of daily steps with imputed values
 
-```{r imputed histogram, echo=TRUE, fig.width=11, fig.height=7, message = FALSE}
 p <- ggplot(steps.day.imp, aes(x=steps)) +
   geom_histogram() +
   ylab("Frequency") +
@@ -155,20 +166,27 @@ p <- ggplot(steps.day.imp, aes(x=steps)) +
   theme(legend.background = element_blank())
 
 p
+```
 
+![plot of chunk imputing missing values](figure/imputing missing values.png) 
+
+```r
 median.steps.imp <- median(steps.day.imp$steps, na.rm = TRUE)
 mean.steps.imp <- mean(steps.day.imp$steps, na.rm = TRUE)
 
-message("The mean number of steps taken each day with imputed data was ", round(median.steps.imp, 2), " while the median was ", round(mean.steps.imp, 2), ".", sep = "")
-
-message("The median and mean are identical. Both are higher than before.")
-
+cat("The mean number of steps taken each day with imputed data was ", round(median.steps.imp, 2), " while the median was ", round(mean.steps.imp, 2), ".", sep = "")
 ```
 
-### Time series plot for weekdays and weekend
+```
+## The mean number of steps taken each day with imputed data was 10766 while the median was 10766.
+```
 
-```{r investigate weekends, echo=TRUE, fig.width=11, fig.height=10}
+```r
+# The median and mean are now identical. Both are higher than before.
+```
 
+
+```r
 dat.imp <- transform(dat.imp, weekend = as.POSIXlt(date, format='%m/%d/%Y')$wday %in% c(0, 6))
 
 dat.imp$weekend <- factor(dat.imp$weekend, labels = c("weekday", "weekend"))
@@ -200,6 +218,7 @@ p <- ggplot(dat.imp.steps.interval, aes(x = interval, y = steps, group = weekend
   theme(legend.position="none")
 
 p
-
 ```
+
+![plot of chunk investigate weekends](figure/investigate weekends.png) 
 
